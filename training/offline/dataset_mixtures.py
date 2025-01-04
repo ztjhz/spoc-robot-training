@@ -21,3 +21,7 @@ CHORESNAV = [
     "ObjectNavDescription",
     "RoomNav",
 ]
+
+OBJECTNAV = [
+    "ObjectNavType",
+]
