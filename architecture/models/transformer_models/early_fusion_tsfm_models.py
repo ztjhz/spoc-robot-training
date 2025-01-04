@@ -88,6 +88,10 @@ class EarlyFusionCnnTransformer(nn.Module):
             self.object_in_hand_embed = nn.Embedding(3, self.cfg.decoder.d_model)
             self.object_in_hand_embed.weight.data.uniform_(-0.01, 0.01)
 
+        if "room_current_seen" in self.input_sensors:
+            self.room_current_seen_embed = nn.Embedding(3, self.cfg.decoder.d_model)
+            self.room_current_seen_embed.weight.data.uniform_(-0.01, 0.01)
+
     def mock_batch(self):
         B, T, C, H, W = 2, 10, 3, 224, 384
         L = 15
@@ -126,6 +130,12 @@ class EarlyFusionCnnTransformer(nn.Module):
                 non_visual_sensors["an_object_is_in_hand"]
             )
             visual_feats = visual_feats + object_in_hand_enc
+
+        if "room_current_seen" in non_visual_sensors:
+            room_current_seen_enc = self.room_current_seen_embed(
+                non_visual_sensors["room_current_seen"]
+            )
+            visual_feats = visual_feats + room_current_seen_enc
 
         time_enc = self.time_encoder(time_ids)
         visual_feats = visual_feats + time_enc
@@ -376,6 +386,11 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             observations["an_object_is_in_hand"] = observations["an_object_is_in_hand"][:, 0]
             preprocessed_nonvisual_sensors["an_object_is_in_hand"] = (
                 self.preprocessor.process_objinhand([observations])
+            )
+
+        if "room_current_seen" in self.model.input_sensors:
+            preprocessed_nonvisual_sensors["room_current_seen"] = (
+                self.preprocessor.process_room_current_seen([observations])
             )
 
         return dict(
