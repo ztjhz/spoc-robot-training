@@ -39,7 +39,7 @@ export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
 export VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 export VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 
-export WANDB_API_KEY="<WANDB_API>"
+export WANDB_API_KEY="<WANDB_API_KEY>"
 export WANDB_NOTES="Eval baseline"
 
 export OBJAVERSE_DATA_BASE_DIR="objaverse_assets"
@@ -56,6 +56,7 @@ python -m training.offline.online_eval \
   --eval_subset minival \
   --output_basedir eval_log \
   --test_augmentation \
+  --dataset_type OBJECTNAV \
   --task_type ObjectNavType \
   --input_sensors raw_navigation_camera raw_manipulation_camera last_actions an_object_is_in_hand \
  nav_task_relevant_object_bbox manip_task_relevant_object_bbox nav_accurate_object_bbox manip_accurate_object_bbox \
