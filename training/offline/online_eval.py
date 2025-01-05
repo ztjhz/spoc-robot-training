@@ -212,6 +212,6 @@ def make_wandb(wandb_project, wandb_entity, wandb_name, wandb_directory):
 if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "False"
     args = parse_args()
-    if args.wandb_logging:
-        os.makedirs(os.environ["WANDB_DIR"], exist_ok=True)
+    # if args.wandb_logging:
+    #     os.makedirs(os.environ["WANDB_DIR"], exist_ok=True)
     main(args)
