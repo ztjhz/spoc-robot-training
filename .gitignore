@@ -1,3 +1,10 @@
+logs/
+objaverse_*
+tmp_log/
+pretrained_models/
+train_logs/
+eval_log/
+
 # build artifacts
 
 .eggs/
@@ -6,7 +13,6 @@ my_package.egg-info/
 build/
 dist/
 pip-wheel-metadata/
-
 
 # dev tools
 
