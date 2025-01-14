@@ -191,6 +191,7 @@ class EarlyFusionCnnRNN(nn.Module):
         input_sensors,
         loss,
         ckpt_pth=None,
+        freeze_original=False,
     ):
         model_cfg = EarlyFusionCnnRNNConfig()
         model_cfg.action_loss = "action" in loss
@@ -238,7 +239,7 @@ class EarlyFusionCnnRNN(nn.Module):
 
         model = EarlyFusionCnnRNN(model_cfg)
         if ckpt_pth is not None:
-            load_pl_ckpt(model, ckpt_pth)
+            load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
 
         if "siglip" in model_version.lower():
             preproc_cfg = SigLipPreprocessorConfig(

@@ -3,7 +3,7 @@ import os
 import torch
 
 
-def load_pl_ckpt(model, ckpt_pth, ckpt_prefix="model.", verbose=False):
+def load_pl_ckpt(model, ckpt_pth, ckpt_prefix="model.", verbose=False, freeze_original=False):
     print(f"Loading ckpt {ckpt_pth} using ckpt_prefix='{ckpt_prefix}' ...")
     ckpt_state_dict = torch.load(ckpt_pth, map_location="cpu")["state_dict"]
 
@@ -46,6 +46,17 @@ def load_pl_ckpt(model, ckpt_pth, ckpt_prefix="model.", verbose=False):
             params_in_ckpt_not_in_model,
         )
         print("-" * 80)
+
+    if freeze_original:
+        freeze_pretrained_weights(model)
+
+        if verbose:
+            print("Froze original weights")
+
+def freeze_pretrained_weights(model):
+    for name, param in model.named_parameters():
+        if "room_current_seen_embed" not in name:  # Skip freezing for the new layer
+            param.requires_grad = False
 
 
 def get_latest_local_ckpt_pth(ckpt_dir):

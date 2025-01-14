@@ -63,6 +63,8 @@ def arg_parser_for_offline_training():
         nargs="+",
         default=["raw_navigation_camera", "raw_manipulation_camera"],
     )
+    # whether to freeze the pretrained weights of the model
+    parser.add_argument("--freeze_original", type=str2bool, default=False)
     return parser
 
 
@@ -82,6 +84,7 @@ class LitModel(pl.LightningModule):
             input_sensors=args.input_sensors,
             loss=args.loss,
             ckpt_pth=args.ckpt_pth,
+            freeze_model=args.freeze_original
         )
         self.model = model
         self.preproc = preproc
