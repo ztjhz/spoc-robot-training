@@ -84,7 +84,7 @@ class LitModel(pl.LightningModule):
             input_sensors=args.input_sensors,
             loss=args.loss,
             ckpt_pth=args.ckpt_pth,
-            freeze_model=args.freeze_original
+            freeze_original=args.freeze_original
         )
         self.model = model
         self.preproc = preproc
