@@ -56,6 +56,8 @@ def freeze_pretrained_weights(model):
         if "room_current_seen_embed" not in name:  # Skip freezing for the new layer
             param.requires_grad = False
             print("Froze:", name)
+        else:
+            print("Did not freeze:", name)
 
 
 def get_latest_local_ckpt_pth(ckpt_dir):
