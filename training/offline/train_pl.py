@@ -55,6 +55,8 @@ def arg_parser_for_offline_training():
     parser.add_argument("--restart_optimizer", action=argparse.BooleanOptionalAction)
     # initialize model from a specified run_id and step
     parser.add_argument("--init_model", action=argparse.BooleanOptionalAction)
+    # specify ckpt path to load for --init_model
+    parser.add_argument("--ckpt_dir", type=str, default="")
     # specify run id for --resume or --init_model
     parser.add_argument("--run_id", type=str)
     parser.add_argument("--step", type=int, default=-1)
@@ -399,12 +401,18 @@ def launch_training(args):
         )
 
     if args.init_model:
-        init_model_dir = os.path.join(args.exp_dir, args.run_id, str(args.step))
-        logger.download_artifact(
-            f"{args.wandb_entity_name}/{args.wandb_project_name}/ckpt-{args.run_id}-{args.step}:latest",
-            save_dir=init_model_dir,
-        )
-        args.ckpt_pth = os.path.join(init_model_dir, "model.ckpt")
+        if args.ckpt_dir:
+            # load ckpt from any .ckpy file in the directory:
+            ckpt_files = [f for f in os.listdir(args.ckpt_dir) if f.endswith(".ckpt")]
+            assert len(ckpt_files) == 1, f"Found more than one ckpt file in {args.ckpt_dir}: {ckpt_files}"
+            args.ckpt_pth = os.path.join(args.ckpt_dir, ckpt_files[0])
+        else:
+            init_model_dir = os.path.join(args.exp_dir, args.run_id, str(args.step))
+            logger.download_artifact(
+                f"{args.wandb_entity_name}/{args.wandb_project_name}/ckpt-{args.run_id}-{args.step}:latest",
+                save_dir=init_model_dir,
+            )
+            args.ckpt_pth = os.path.join(init_model_dir, "model.ckpt")
     else:
         args.ckpt_pth = None
 
