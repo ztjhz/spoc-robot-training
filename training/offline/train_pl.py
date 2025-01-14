@@ -314,7 +314,6 @@ class LitModel(pl.LightningModule):
             if k in state_dict:
                 del state_dict[k]
 
-        assert strict is None or strict == (not self.use_non_strict_ckpt_loading)
         strict = not self.use_non_strict_ckpt_loading
 
         return super().load_state_dict(state_dict, strict=strict)
