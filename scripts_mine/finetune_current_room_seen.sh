@@ -42,7 +42,7 @@ export VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 export VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 
 export WANDB_API_KEY="<WANDB_API_KEY>"
-export WANDB_NOTES="Finetune with room_current_seen"
+export WANDB_NOTES="Finetune with room_current_seen (fronzen original + train embedding)"
 
 export OBJAVERSE_DATA_BASE_DIR="objaverse_assets"
 export OBJAVERSE_HOUSES_BASE_DIR="objaverse_houses"
