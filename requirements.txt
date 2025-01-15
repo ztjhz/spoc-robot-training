@@ -81,4 +81,4 @@ lightning
 open-clip-torch
 
 # for LoRA
-peft
+git+https://github.com/huggingface/peft.git

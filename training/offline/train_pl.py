@@ -21,22 +21,6 @@ from training.offline.chores_dataset import ChoresMultitaskDataset
 from training.offline.dataset_mixtures import get_mixture_by_name
 from training.offline.train_utils import get_latest_local_ckpt_pth
 
-peft_config = LoraConfig(
-    r=8,
-    lora_alpha=32,
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM",
-    target_modules=[
-        "self_attn.in_proj_weight",
-        "self_attn.out_proj.weight",
-        "multihead_attn.in_proj_weight",
-        "multihead_attn.out_proj.weight",
-        "linear1.weight",
-        "linear2.weight",
-    ],
-    modules_to_save = ["room_current_seen_embed"],
-)
 
 def arg_parser_for_offline_training():
     parser = argparse.ArgumentParser()
@@ -86,6 +70,11 @@ def arg_parser_for_offline_training():
     parser.add_argument("--freeze_original", type=str2bool, default=False)
     # whether to use LoRA for peft
     parser.add_argument("--use_lora", action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--lora_target_modules",
+        nargs="+",
+        default=["self_attn", "multihead_attn", "linear1", "linear2"],
+    )
     return parser
 
 
@@ -109,7 +98,25 @@ class LitModel(pl.LightningModule):
         )
         if args.use_lora:
             assert args.freeze_original, "LoRA is only supported with frozen pretrained weights"
+            peft_config = LoraConfig(
+                r=8,
+                lora_alpha=32,
+                lora_dropout=0.05,
+                bias="none",
+                target_modules=args.lora_target_modules,
+                modules_to_save = ["room_current_seen_embed", "action_classifier"],
+            )
+
             model = get_peft_model(model, peft_config)
+
+            print("=========== LoRA enabled ===========")
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    print(f"Train: {name}")
+                else:
+                    print(f"Frozen: {name}")
+            print("=========== LoRA enabled ===========")
+
         self.model = model
         self.preproc = preproc
         self.args = args
