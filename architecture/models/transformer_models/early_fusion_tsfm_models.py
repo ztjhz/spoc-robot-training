@@ -299,12 +299,6 @@ class EarlyFusionCnnTransformer(nn.Module):
             model = get_peft_model(model, peft_config)
             freeze_original = False #  LoRA will freeze the original weights
             print("=========== LoRA enabled ===========")
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    print(f"Train: {name}")
-                else:
-                    print(f"Frozen: {name}")
-            print("=========== LoRA enabled ===========")
 
         if ckpt_pth is not None:
             load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
