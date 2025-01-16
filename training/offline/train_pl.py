@@ -13,7 +13,6 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchmetrics import F1Score
 from torchmetrics.aggregation import SumMetric
-from peft import LoraConfig, get_peft_model
 
 from architecture.models.transformer_models import REGISTERED_MODELS
 from online_evaluation.local_logging_utils import LocalWandbLogger
@@ -89,33 +88,18 @@ class LitModel(pl.LightningModule):
         super().__init__()
         self.use_non_strict_ckpt_loading = args.use_non_strict_ckpt_loading
         self.restart_optimizer = args.restart_optimizer
+        if args.use_lora:
+            assert args.freeze_original, "LoRA is only supported with frozen pretrained weights"
+
         model, preproc = REGISTERED_MODELS[args.model].build_model(
             model_version=args.model_version,
             input_sensors=args.input_sensors,
             loss=args.loss,
             ckpt_pth=args.ckpt_pth,
-            freeze_original=args.freeze_original
+            freeze_original=args.freeze_original,
+            use_lora=args.use_lora,
+            lora_target_modules=args.lora_target_modules,
         )
-        if args.use_lora:
-            assert args.freeze_original, "LoRA is only supported with frozen pretrained weights"
-            peft_config = LoraConfig(
-                r=8,
-                lora_alpha=32,
-                lora_dropout=0.05,
-                bias="none",
-                target_modules=args.lora_target_modules,
-                modules_to_save = ["room_current_seen_embed", "action_classifier"],
-            )
-
-            model = get_peft_model(model, peft_config)
-
-            print("=========== LoRA enabled ===========")
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    print(f"Train: {name}")
-                else:
-                    print(f"Frozen: {name}")
-            print("=========== LoRA enabled ===========")
 
         self.model = model
         self.preproc = preproc

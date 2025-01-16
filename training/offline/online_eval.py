@@ -45,6 +45,13 @@ def parse_args():
     )
     parser.add_argument("--model_version_override", default="auto")
     parser.add_argument("--total_num_videos", type=int, default=8200)
+    # whether to use LoRA for peft
+    parser.add_argument("--use_lora", action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--lora_target_modules",
+        nargs="+",
+        default=["self_attn", "multihead_attn", "linear1", "linear2"],
+    )
 
     args = parser.parse_args()
 
@@ -142,6 +149,8 @@ def main(args):
         loss=loss,
         sampling=args.sampling,
         ckpt_pth=ckpt_pth,
+        use_lora=args.use_lora,
+        lora_target_modules=args.lora_target_modules,
     )
 
     # Ensure the model can be loaded

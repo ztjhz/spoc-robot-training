@@ -1,6 +1,7 @@
 import numpy as np
 from open_clip.tokenizer import HFTokenizer
 from open_clip.transformer import TextTransformer
+from peft import LoraConfig, get_peft_model
 
 from architecture.agent import AbstractAgent
 from architecture.models.transformer_models.image_encoders import *
@@ -28,6 +29,7 @@ from utils.sensor_constant_utils import is_a_visual_sensor, is_a_non_visual_sens
 EarlyFusionCnnTransformerPreprocessorConfig = PreprocessorConfig
 EarlyFusionCnnTransformerPreprocessor = Preprocessor
 
+MODULES_TO_SAVE = ["room_current_seen_embed", "action_classifier"]
 
 @dataclass
 class EarlyFusionCnnTransformerConfig:
@@ -188,6 +190,8 @@ class EarlyFusionCnnTransformer(nn.Module):
         loss,
         ckpt_pth=None,
         freeze_original=False,
+        use_lora=False,
+        lora_target_modules=[],
     ):
         model_cfg = EarlyFusionCnnTransformerConfig()
         model_cfg.action_loss = "action" in loss
@@ -282,6 +286,26 @@ class EarlyFusionCnnTransformer(nn.Module):
             raise NotImplementedError
 
         model = EarlyFusionCnnTransformer(model_cfg)
+
+        if use_lora:
+            peft_config = LoraConfig(
+                r=8,
+                lora_alpha=32,
+                lora_dropout=0.05,
+                bias="none",
+                target_modules=lora_target_modules,
+                modules_to_save=MODULES_TO_SAVE,
+            )
+            model = get_peft_model(model, peft_config)
+            freeze_original = False #  LoRA will freeze the original weights
+            print("=========== LoRA enabled ===========")
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    print(f"Train: {name}")
+                else:
+                    print(f"Frozen: {name}")
+            print("=========== LoRA enabled ===========")
+
         if ckpt_pth is not None:
             load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
 
@@ -309,8 +333,15 @@ class EarlyFusionCnnTransformer(nn.Module):
         device,
         sampling,
         ckpt_pth=None,
+        use_lora=False,
+        lora_target_modules=[],
     ):
-        model, preproc = cls.build_model(model_version, input_sensors, loss, ckpt_pth)
+        model, preproc = cls.build_model(model_version,
+                                         input_sensors,
+                                         loss,
+                                         ckpt_pth,
+                                         use_lora=use_lora,
+                                         lora_target_modules=lora_target_modules)
         return EarlyFusionCnnTransformerAgent(model, preproc, device, sampling)
 
 
