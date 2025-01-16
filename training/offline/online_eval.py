@@ -52,6 +52,8 @@ def parse_args():
         nargs="+",
         default=["self_attn", "multihead_attn", "linear1", "linear2"],
     )
+    # local checkpoint path
+    parser.add_argument("--ckpt_pth", default=None, type=str)
 
     args = parser.parse_args()
 
@@ -112,7 +114,9 @@ def main(args):
     os.makedirs(ckpt_dir, exist_ok=True)
     os.makedirs(exp_dir, exist_ok=True)
 
-    if args.wandb_logging:
+    if args.ckpt_pth:
+        ckpt_pth = args.ckpt_pth
+    elif args.wandb_logging:
         if args.ckptStep is None:
             raise ValueError("ckptStep is None")
         assert (
