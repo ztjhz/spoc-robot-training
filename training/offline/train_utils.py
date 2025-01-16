@@ -49,15 +49,14 @@ def load_pl_ckpt(model, ckpt_pth, ckpt_prefix="model.", verbose=False, freeze_or
 
     if freeze_original:
         freeze_pretrained_weights(model)
-        print("Froze original weights")
 
 def freeze_pretrained_weights(model):
     for name, param in model.named_parameters():
-        if "room_current_seen_embed" not in name:  # Skip freezing for the new layer
-            param.requires_grad = False
-            print("Froze:", name)
-        else:
+        if "room_current_seen_embed" in name or "last_action_success_embed" in name or "action_classifier" in name:
             print("Did not freeze:", name)
+        else:  # Skip freezing for the new layer
+            param.requires_grad = False
+    print("Froze original weights")
 
 
 def get_latest_local_ckpt_pth(ckpt_dir):
