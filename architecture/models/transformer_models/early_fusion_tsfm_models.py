@@ -144,9 +144,9 @@ class EarlyFusionCnnTransformer(nn.Module):
             visual_feats = visual_feats + room_current_seen_enc
 
         if "last_action_success" in non_visual_sensors:
-            last_action_success_enc = self.last_action_success_embed(
-                non_visual_sensors["last_action_success"]
-            )
+            _last_action_success = non_visual_sensors["last_action_success"]
+            _last_action_success = torch.where(_last_action_success == -1, torch.tensor(2, device=_last_action_success.device), _last_action_success)
+            last_action_success_enc = self.last_action_success_embed(_last_action_success)
             visual_feats = visual_feats + last_action_success_enc
 
         time_enc = self.time_encoder(time_ids)
@@ -430,6 +430,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             )
 
         if "last_action_success" in self.model.input_sensors:
+            observations["last_action_success"] = observations["last_action_success"][:, 0]
             preprocessed_nonvisual_sensors["last_action_success"] = (
                 self.preprocessor.process_last_action_success([observations])
             )

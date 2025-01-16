@@ -216,10 +216,15 @@ class Preprocessor:
             )
     
     def process_last_action_success(self, batch):
-        last_action_success = [torch.tensor(sample["last_action_success"]).float() for sample in batch]
+        last_action_success = [
+            torch.tensor(sample["last_action_success"][: self.cfg.max_steps]).long()
+            for sample in batch
+        ]
         if self.cfg.pad:
-            return pad_sequence(last_action_success, batch_first=True, padding_value=-1).to(self.device)
-        
+            return pad_sequence(last_action_success, batch_first=True, padding_value=2).to(self.device)
+
+        last_action_success = torch.where(last_action_success == -1, torch.tensor(2, device=last_action_success.device), last_action_success)
+
         return last_action_success
 
     def create_padding_mask(self, lengths, max_length):

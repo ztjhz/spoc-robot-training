@@ -194,7 +194,10 @@ class ChoresDataReader:
                     sensors[k] = bbox_to_return
 
                 elif k == "last_action_success":
-                    sensors[k] = grp[k][0]
+                    if k in grp:
+                        sensors[k] = grp[k][:, 0]
+                    else:
+                        sensors[k] = np.zeros(len(sensors["last_action_str"]))
                 else:
                     raise NotImplementedError(f"Sensor {k} not implemented")
 
