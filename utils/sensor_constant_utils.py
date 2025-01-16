@@ -44,4 +44,5 @@ def is_a_non_visual_sensor(sensor):
         "manip_task_relevant_object_bbox",
         "nav_accurate_object_bbox",
         "manip_accurate_object_bbox",
+        "last_action_success",
     ]

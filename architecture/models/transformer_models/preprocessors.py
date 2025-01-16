@@ -214,6 +214,13 @@ class Preprocessor:
             return pad_sequence(task_relevant_object_bbox, batch_first=True, padding_value=-1).to(
                 self.device
             )
+    
+    def process_last_action_success(self, batch):
+        last_action_success = [torch.tensor(sample["last_action_success"]).float() for sample in batch]
+        if self.cfg.pad:
+            return pad_sequence(last_action_success, batch_first=True, padding_value=-1).to(self.device)
+        
+        return last_action_success
 
     def create_padding_mask(self, lengths, max_length):
         # Create a range tensor with the shape (1,max_length)
@@ -257,6 +264,8 @@ class Preprocessor:
                 "manip_accurate_object_bbox",
             ]:
                 output[sensor] = self.process_task_relevant_bbox(batch, sensor)
+            elif sensor == "last_action_success":
+                output[sensor] = self.process_last_action_success(batch)
             else:
                 if sensor not in ["initial_agent_location", "templated_task_type"]:
                     raise NotImplementedError(f"Sensor {sensor} not implemented")

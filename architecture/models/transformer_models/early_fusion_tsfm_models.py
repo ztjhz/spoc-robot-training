@@ -94,6 +94,10 @@ class EarlyFusionCnnTransformer(nn.Module):
             self.room_current_seen_embed = nn.Embedding(3, self.cfg.decoder.d_model)
             self.room_current_seen_embed.weight.data.uniform_(-0.01, 0.01)
 
+        if "last_action_success" in self.input_sensors:
+            self.last_action_success_embed = nn.Embedding(3, self.cfg.decoder.d_model)
+            self.last_action_success_embed.weight.data.uniform_(-0.01, 0.01)
+
     def mock_batch(self):
         B, T, C, H, W = 2, 10, 3, 224, 384
         L = 15
@@ -138,6 +142,12 @@ class EarlyFusionCnnTransformer(nn.Module):
                 non_visual_sensors["room_current_seen"]
             )
             visual_feats = visual_feats + room_current_seen_enc
+
+        if "last_action_success" in non_visual_sensors:
+            last_action_success_enc = self.last_action_success_embed(
+                non_visual_sensors["last_action_success"]
+            )
+            visual_feats = visual_feats + last_action_success_enc
 
         time_enc = self.time_encoder(time_ids)
         visual_feats = visual_feats + time_enc
@@ -417,6 +427,11 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         if "room_current_seen" in self.model.input_sensors:
             preprocessed_nonvisual_sensors["room_current_seen"] = (
                 self.preprocessor.process_room_current_seen([observations])
+            )
+
+        if "last_action_success" in self.model.input_sensors:
+            preprocessed_nonvisual_sensors["last_action_success"] = (
+                self.preprocessor.process_last_action_success([observations])
             )
 
         return dict(

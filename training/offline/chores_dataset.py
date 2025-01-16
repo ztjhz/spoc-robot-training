@@ -193,6 +193,8 @@ class ChoresDataReader:
 
                     sensors[k] = bbox_to_return
 
+                elif k == "last_action_success":
+                    sensors[k] = grp[k][0]
                 else:
                     raise NotImplementedError(f"Sensor {k} not implemented")
 
