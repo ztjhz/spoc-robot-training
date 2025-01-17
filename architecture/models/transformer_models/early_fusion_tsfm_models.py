@@ -29,7 +29,8 @@ from utils.sensor_constant_utils import is_a_visual_sensor, is_a_non_visual_sens
 EarlyFusionCnnTransformerPreprocessorConfig = PreprocessorConfig
 EarlyFusionCnnTransformerPreprocessor = Preprocessor
 
-MODULES_TO_SAVE = ["room_current_seen_embed", "action_classifier"]
+MODULES_TO_SAVE = ["action_classifier"]
+
 
 @dataclass
 class EarlyFusionCnnTransformerConfig:
@@ -145,7 +146,11 @@ class EarlyFusionCnnTransformer(nn.Module):
 
         if "last_action_success" in non_visual_sensors:
             _last_action_success = non_visual_sensors["last_action_success"]
-            _last_action_success = torch.where(_last_action_success == -1, torch.tensor(2, device=_last_action_success.device), _last_action_success)
+            _last_action_success = torch.where(
+                _last_action_success == -1,
+                torch.tensor(2, device=_last_action_success.device),
+                _last_action_success,
+            )
             last_action_success_enc = self.last_action_success_embed(_last_action_success)
             visual_feats = visual_feats + last_action_success_enc
 
@@ -298,6 +303,10 @@ class EarlyFusionCnnTransformer(nn.Module):
         model = EarlyFusionCnnTransformer(model_cfg)
 
         if use_lora:
+            if "room_current_seen" in input_sensors:
+                MODULES_TO_SAVE += ["room_current_seen"]
+            if "last_action_success" in input_sensors:
+                MODULES_TO_SAVE += ["last_action_success"]
             peft_config = LoraConfig(
                 r=8,
                 lora_alpha=32,
@@ -307,7 +316,7 @@ class EarlyFusionCnnTransformer(nn.Module):
                 modules_to_save=MODULES_TO_SAVE,
             )
             model = get_peft_model(model, peft_config)
-            freeze_original = False #  LoRA will freeze the original weights
+            freeze_original = False  #  LoRA will freeze the original weights
             print("=========== LoRA enabled ===========")
 
         if ckpt_pth is not None:
@@ -340,12 +349,14 @@ class EarlyFusionCnnTransformer(nn.Module):
         use_lora=False,
         lora_target_modules=[],
     ):
-        model, preproc = cls.build_model(model_version,
-                                         input_sensors,
-                                         loss,
-                                         ckpt_pth,
-                                         use_lora=use_lora,
-                                         lora_target_modules=lora_target_modules)
+        model, preproc = cls.build_model(
+            model_version,
+            input_sensors,
+            loss,
+            ckpt_pth,
+            use_lora=use_lora,
+            lora_target_modules=lora_target_modules,
+        )
         return EarlyFusionCnnTransformerAgent(model, preproc, device, sampling)
 
 
