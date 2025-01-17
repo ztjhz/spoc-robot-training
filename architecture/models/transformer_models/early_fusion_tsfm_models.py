@@ -29,8 +29,6 @@ from utils.sensor_constant_utils import is_a_visual_sensor, is_a_non_visual_sens
 EarlyFusionCnnTransformerPreprocessorConfig = PreprocessorConfig
 EarlyFusionCnnTransformerPreprocessor = Preprocessor
 
-MODULES_TO_SAVE = ["action_classifier"]
-
 
 @dataclass
 class EarlyFusionCnnTransformerConfig:
@@ -303,17 +301,18 @@ class EarlyFusionCnnTransformer(nn.Module):
         model = EarlyFusionCnnTransformer(model_cfg)
 
         if use_lora:
+            modules_to_save = ["action_classifier"]
             if "room_current_seen" in input_sensors:
-                MODULES_TO_SAVE += ["room_current_seen"]
+                modules_to_save += ["room_current_seen"]
             if "last_action_success" in input_sensors:
-                MODULES_TO_SAVE += ["last_action_success"]
+                modules_to_save += ["last_action_success"]
             peft_config = LoraConfig(
                 r=8,
                 lora_alpha=32,
                 lora_dropout=0.05,
                 bias="none",
                 target_modules=lora_target_modules,
-                modules_to_save=MODULES_TO_SAVE,
+                modules_to_save=modules_to_save,
             )
             model = get_peft_model(model, peft_config)
             freeze_original = False  #  LoRA will freeze the original weights
