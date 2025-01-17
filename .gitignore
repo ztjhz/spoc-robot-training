@@ -4,6 +4,7 @@ tmp_log/
 pretrained_models/
 train_logs/
 eval_log/
+lora_log/
 
 # build artifacts
 
