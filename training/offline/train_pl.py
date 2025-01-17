@@ -99,6 +99,7 @@ class LitModel(pl.LightningModule):
             freeze_original=args.freeze_original,
             use_lora=args.use_lora,
             lora_target_modules=args.lora_target_modules,
+            is_train=True,
         )
 
         self.model = model

@@ -205,6 +205,7 @@ class EarlyFusionCnnTransformer(nn.Module):
         freeze_original=False,
         use_lora=False,
         lora_target_modules=[],
+        is_train=False,
     ):
         model_cfg = EarlyFusionCnnTransformerConfig()
         model_cfg.action_loss = "action" in loss
@@ -303,9 +304,10 @@ class EarlyFusionCnnTransformer(nn.Module):
         if use_lora:
             modules_to_save = ["action_classifier"]
             if "room_current_seen" in input_sensors:
-                modules_to_save += ["room_current_seen"]
+                modules_to_save.append("room_current_seen")
             if "last_action_success" in input_sensors:
-                modules_to_save += ["last_action_success"]
+                modules_to_save.append("last_action_success")
+
             peft_config = LoraConfig(
                 r=8,
                 lora_alpha=32,
@@ -314,12 +316,23 @@ class EarlyFusionCnnTransformer(nn.Module):
                 target_modules=lora_target_modules,
                 modules_to_save=modules_to_save,
             )
-            model = get_peft_model(model, peft_config)
-            freeze_original = False  #  LoRA will freeze the original weights
-            print("=========== LoRA enabled ===========")
 
-        if ckpt_pth is not None:
-            load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
+            if is_train:
+                # Training mode: Load checkpoint first, then apply LoRA
+                if ckpt_pth is not None:
+                    load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
+                model = get_peft_model(model, peft_config)
+            else:
+                # Evaluation mode: Apply LoRA first, then load checkpoint
+                model = get_peft_model(model, peft_config)
+                if ckpt_pth is not None:
+                    load_pl_ckpt(model, ckpt_pth, freeze_original=False)  #  LoRA will freeze the original weights
+
+            print("=========== LoRA enabled ===========")
+        else:
+            # No LoRA: Only load checkpoint if provided
+            if ckpt_pth is not None:
+                load_pl_ckpt(model, ckpt_pth, freeze_original=freeze_original)
 
         if "siglip" in model_version.lower():
             preproc_cfg = SigLipPreprocessorConfig(
