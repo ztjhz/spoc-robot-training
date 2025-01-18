@@ -42,7 +42,7 @@ export VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 export VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
 
 export WANDB_API_KEY="<WANDB_API_KEY>"
-export WANDB_NOTES="Finetune LoRA with last_action_success (freeze original + train embedding + train LoRA)"
+export WANDB_NOTES="(lr 0.1) Finetune LoRA with last_action_success (freeze original + train embedding + train LoRA)"
 
 export OBJAVERSE_DATA_BASE_DIR="objaverse_assets"
 export OBJAVERSE_HOUSES_BASE_DIR="objaverse_houses"
@@ -61,7 +61,7 @@ python -m training.offline.train_pl \
   --model_version siglip_base_3_double_det \
   --sliding_window 100 \
   --per_gpu_batch 3 \
-  --lr 0.0001 \
+  --lr 0.1 \
   --data_dir /home/FYP/tohj0037/spoc-robot-training/data/all \
   --dataset_version OBJECTNAV \
   --model EarlyFusionCnnTransformer \
