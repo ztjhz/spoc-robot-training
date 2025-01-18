@@ -61,8 +61,8 @@ python -m training.offline.train_pl \
   --model_version siglip_base_3_double_det \
   --sliding_window 100 \
   --per_gpu_batch 4 \
-  --accumulate_grad_batches 50 \
-  --lr 0.0001 \
+  --accumulate_grad_batches 1 \
+  --lr 0.01 \
   --data_dir /home/FYP/tohj0037/spoc-robot-training/data/all \
   --dataset_version OBJECTNAV \
   --model EarlyFusionCnnTransformer \
