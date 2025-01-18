@@ -47,6 +47,7 @@ def arg_parser_for_offline_training():
     parser.add_argument("--final_prob_sample_last_steps", type=float, default=0.0)
     parser.add_argument("--reduce_action_redundancy", type=str2bool, default=False)
     parser.add_argument("--precision", type=str, default="32-true", choices=["32-true", "16-mixed"])
+    parser.add_argument("--accumulate_grad_batches", type=int, default=1)
     # resume training from last local checkpoint
     parser.add_argument("--resume_local", action=argparse.BooleanOptionalAction)
     # resume from specified run id and step
@@ -463,6 +464,7 @@ def launch_training(args):
         max_epochs=args.max_epochs,
         logger=logger,
         precision=args.precision,
+        accumulate_grad_batches=args.accumulate_grad_batches,
     )
 
     resume_ckpt_path = None
