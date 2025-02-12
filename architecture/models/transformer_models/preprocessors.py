@@ -214,16 +214,23 @@ class Preprocessor:
             return pad_sequence(task_relevant_object_bbox, batch_first=True, padding_value=-1).to(
                 self.device
             )
-    
+
     def process_last_action_success(self, batch):
+        """Processes last action success. Value 0 is failure, 1 is success, 2 is padding/unknown."""
         last_action_success = [
             torch.tensor(sample["last_action_success"][: self.cfg.max_steps]).long()
             for sample in batch
         ]
         if self.cfg.pad:
-            return pad_sequence(last_action_success, batch_first=True, padding_value=2).to(self.device)
+            return pad_sequence(last_action_success, batch_first=True, padding_value=2).to(
+                self.device
+            )
 
-        last_action_success = torch.where(last_action_success == -1, torch.tensor(2, device=last_action_success.device), last_action_success)
+        last_action_success = torch.where(
+            last_action_success == -1,
+            torch.tensor(2, device=last_action_success.device),
+            last_action_success,
+        )
 
         return last_action_success
 
