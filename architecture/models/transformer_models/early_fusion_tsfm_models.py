@@ -25,6 +25,7 @@ from training.offline.train_utils import load_pl_ckpt
 from utils.constants.stretch_initialization_utils import ALL_STRETCH_ACTIONS
 from utils.nn_utils import create_causal_mask, sample_action_index_from_logits
 from utils.sensor_constant_utils import is_a_visual_sensor, is_a_non_visual_sensor
+from utils.type_utils import THORActions
 
 EarlyFusionCnnTransformerPreprocessorConfig = PreprocessorConfig
 EarlyFusionCnnTransformerPreprocessor = Preprocessor
@@ -207,6 +208,9 @@ class EarlyFusionCnnTransformer(nn.Module):
         lora_target_modules=[],
         is_train=False,
     ):
+        print(
+            f"######################################## {model_version} ########################################"
+        )
         model_cfg = EarlyFusionCnnTransformerConfig()
         model_cfg.action_loss = "action" in loss
         model_cfg.visual_encoder.input_sensors = input_sensors
@@ -326,7 +330,9 @@ class EarlyFusionCnnTransformer(nn.Module):
                 # Evaluation mode: Apply LoRA first, then load checkpoint
                 model = get_peft_model(model, peft_config)
                 if ckpt_pth is not None:
-                    load_pl_ckpt(model, ckpt_pth, freeze_original=False)  #  LoRA will freeze the original weights
+                    load_pl_ckpt(
+                        model, ckpt_pth, freeze_original=False
+                    )  #  LoRA will freeze the original weights
 
             print("=========== LoRA enabled ===========")
         else:
@@ -373,7 +379,15 @@ class EarlyFusionCnnTransformer(nn.Module):
 
 
 class EarlyFusionCnnTransformerAgent(AbstractAgent):
-    def __init__(self, model, preprocessor, device, sampling="greedy", max_seq_len=1000):
+    def __init__(
+        self,
+        model,
+        preprocessor,
+        device,
+        sampling="greedy",
+        max_seq_len=1000,
+        move_back_after_fail=False,
+    ):
         self.model = model
         self.preprocessor = preprocessor
         self.device = device
@@ -382,6 +396,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         self.reset()
         self.model = self.model.to(self.device)
         self.preprocessor.device = self.device
+        self.move_back_after_fail = move_back_after_fail
 
     def reset(self):
         self.curr_t = 0
@@ -518,5 +533,13 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             self.cache["last_actions"] = action_idx.reshape(1, 1)
 
         self.curr_t += 1
+
+        # if last action failed, move backwards
+        if (
+            self.move_back_after_fail
+            and processed_observations["non_visual_sensors"]["last_action_success"] == 0
+        ):
+            print("failed action, moving back")
+            return THORActions.move_back, torch.softmax(curr_logits, -1)
 
         return action, torch.softmax(curr_logits, -1)
