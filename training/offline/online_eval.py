@@ -54,6 +54,8 @@ def parse_args():
     )
     # local checkpoint path
     parser.add_argument("--ckpt_pth", default=None, type=str)
+    # whether to handle fail move
+    parser.add_argument("--handle_fail_move", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -155,6 +157,7 @@ def main(args):
         ckpt_pth=ckpt_pth,
         use_lora=args.use_lora,
         lora_target_modules=args.lora_target_modules,
+        handle_fail_move=args.handle_fail_move,
     )
 
     # Ensure the model can be loaded

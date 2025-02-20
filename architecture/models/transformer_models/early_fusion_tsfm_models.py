@@ -366,6 +366,7 @@ class EarlyFusionCnnTransformer(nn.Module):
         ckpt_pth=None,
         use_lora=False,
         lora_target_modules=[],
+        handle_fail_move=False,
     ):
         model, preproc = cls.build_model(
             model_version,
@@ -375,7 +376,13 @@ class EarlyFusionCnnTransformer(nn.Module):
             use_lora=use_lora,
             lora_target_modules=lora_target_modules,
         )
-        return EarlyFusionCnnTransformerAgent(model, preproc, device, sampling)
+        return EarlyFusionCnnTransformerAgent(
+            model,
+            preproc,
+            device,
+            sampling,
+            handle_fail_move=handle_fail_move,
+        )
 
 
 class EarlyFusionCnnTransformerAgent(AbstractAgent):
@@ -386,7 +393,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         device,
         sampling="greedy",
         max_seq_len=1000,
-        move_back_after_fail=False,
+        handle_fail_move=False,
     ):
         self.model = model
         self.preprocessor = preprocessor
@@ -396,7 +403,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         self.reset()
         self.model = self.model.to(self.device)
         self.preprocessor.device = self.device
-        self.move_back_after_fail = move_back_after_fail
+        self.handle_fail_move = handle_fail_move
 
     def reset(self):
         self.curr_t = 0
@@ -536,7 +543,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
         # if last action failed, move backwards
         if (
-            self.move_back_after_fail
+            self.handle_fail_move
             and processed_observations["non_visual_sensors"]["last_action_success"] == 0
         ):
             print("failed action, moving back")
