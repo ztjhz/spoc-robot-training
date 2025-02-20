@@ -546,7 +546,8 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             self.handle_fail_move
             and processed_observations["non_visual_sensors"]["last_action_success"] == 0
         ):
-            print("failed action, moving back")
-            return THORActions.move_back, torch.softmax(curr_logits, -1)
+            print("failed action, rotating right")
+            # rotate instead of move back as moving has a chance of colliding with something else while rotating will always succeed.
+            return THORActions.rotate_right, torch.softmax(curr_logits, -1)
 
         return action, torch.softmax(curr_logits, -1)
