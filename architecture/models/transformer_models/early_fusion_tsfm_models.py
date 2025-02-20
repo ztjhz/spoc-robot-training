@@ -549,7 +549,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
             # only keep the last 10 actions
             while len(self.backtracking_actions) > 10:
-                self.backtracking_actions.pop()
+                self.backtracking_actions = self.backtracking_actions[-10:]
 
             # handle failure
             if processed_observations["non_visual_sensors"]["last_action_success"] == 0:
