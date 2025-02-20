@@ -543,12 +543,12 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
         self.curr_t += 1
 
-        if self.handle_fail_move:
+        if not self.backtracking and self.handle_fail_move:
             # add the reverse action to backtracking list
             self.backtracking_actions.append(THORActions.get_reverse_action(action))
 
             # only keep the last 10 actions
-            while len(self.backtracking_actions) > 10:
+            if len(self.backtracking_actions) > 10:
                 self.backtracking_actions = self.backtracking_actions[-10:]
 
             # handle failure
