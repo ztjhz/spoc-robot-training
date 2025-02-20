@@ -92,12 +92,38 @@ class THORActions:
     ]
     sub_done = "sub_done"
 
+    REVERSE_ACTIONS = {
+        move_ahead: move_back,
+        move_back: move_ahead,
+        rotate_right: rotate_left,
+        rotate_left: rotate_right,
+        rotate_right_small: rotate_left_small,
+        rotate_left_small: rotate_right_small,
+        move_arm_up: move_arm_down,
+        move_arm_up_small: move_arm_down_small,
+        move_arm_down: move_arm_up,
+        move_arm_down_small: move_arm_up_small,
+        move_arm_out: move_arm_in,
+        move_arm_out_small: move_arm_in_small,
+        move_arm_in: move_arm_out,
+        move_arm_in_small: move_arm_out_small,
+        wrist_open: wrist_close,
+        wrist_close: wrist_open,
+        pickup: dropoff,
+        dropoff: pickup,
+    }
+
     @classmethod
     def get_action_name(cls, short_string):
         for name, value in cls.__dict__.items():
             if value == short_string:
                 return name
         return None
+
+    @classmethod
+    def get_reverse_action(cls, action):
+        """Returns the reverse action of the given action"""
+        return cls.REVERSE_ACTIONS.get(action, None)
 
 
 REGISTERED_TASK_PARAMS: Dict[str, List[str]] = {}

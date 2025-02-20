@@ -404,6 +404,8 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         self.model = self.model.to(self.device)
         self.preprocessor.device = self.device
         self.handle_fail_move = handle_fail_move
+        self.backtracking = False
+        self.backtracking_actions = []
 
     def reset(self):
         self.curr_t = 0
@@ -541,13 +543,30 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
         self.curr_t += 1
 
-        # if last action failed, move backwards
-        if (
-            self.handle_fail_move
-            and processed_observations["non_visual_sensors"]["last_action_success"] == 0
-        ):
-            print("failed action, rotating right")
-            # rotate instead of move back as moving has a chance of colliding with something else while rotating will always succeed.
-            return THORActions.rotate_right, torch.softmax(curr_logits, -1)
+        if self.handle_fail_move:
+            # add the reverse action to backtracking list
+            self.backtracking_actions.append(THORActions.get_reverse_action(action))
 
+            # only keep the last 10 actions
+            while len(self.backtracking_actions) > 10:
+                self.backtracking_actions.pop()
+
+            # handle failure
+            if processed_observations["non_visual_sensors"]["last_action_success"] == 0:
+                print("failed action, start backtracking")
+                self.backtracking = True
+
+        # backtracking phase
+        if self.backtracking and self.backtracking_actions:
+            if len(self.backtracking_actions) == 0:
+                print("backtracking complete")
+                self.backtracking = False
+
+                # for the last action, change the agent view point so that it can take a different path this time
+                return THORActions.rotate_left_small, torch.softmax(curr_logits, -1)
+            else:
+                action = self.backtracking_actions.pop()
+                return action, torch.softmax(curr_logits, -1)
+
+        # normal case
         return action, torch.softmax(curr_logits, -1)
