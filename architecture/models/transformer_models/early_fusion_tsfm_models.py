@@ -536,7 +536,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
         curr_logits = logits["actions_logits"][0, -1]
 
-        hash_key = processed_observations["visual_sensors"]["raw_navigation_camera"].tobytes()
+        hash_key = processed_observations["visual_sensors"]["raw_navigation_camera"].cpu().numpy().tobytes()
         failed_actions = self.cached_failures[hash_key]
         # zero out previously failed action so that the same action is not taken again
         if len(failed_actions) != 0:
