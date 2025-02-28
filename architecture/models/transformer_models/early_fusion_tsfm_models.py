@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 from open_clip.tokenizer import HFTokenizer
 from open_clip.transformer import TextTransformer
@@ -406,6 +408,8 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         self.handle_fail_move = handle_fail_move
         self.backtracking = False
         self.backtracking_actions = []
+        self.cached_failures = defaultdict(set)
+        self.prev_action_idx = None
 
     def reset(self):
         self.curr_t = 0
@@ -531,12 +535,23 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         logits = self.model.decode_and_get_logits(decoder_input, text_feats)
 
         curr_logits = logits["actions_logits"][0, -1]
+
+        hash_key = processed_observations["visual_sensors"]["raw_navigation_camera"].tobytes()
+        failed_actions = self.cached_failures[hash_key]
+        # zero out previously failed action so that the same action is not taken again
+        if len(failed_actions) != 0:
+            for failed_action_idx in failed_actions:
+                curr_logits[failed_action_idx] = 0
+
         action_idx = sample_action_index_from_logits(
             curr_logits,
             self.sampling,
             self.preprocessor.cfg.action_list,
         )
         action = self.preprocessor.cfg.action_list[action_idx]
+        
+        # keep track for caching failed actions
+        self.prev_action_idx = action_idx
 
         if "last_actions" in self.model.input_sensors:
             self.cache["last_actions"] = action_idx.reshape(1, 1)
@@ -554,6 +569,8 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             # handle failure
             if processed_observations["non_visual_sensors"]["last_action_success"] == 0:
                 print("failed action, start backtracking")
+
+                self.cached_failures[hash_key].add(self.prev_action_idx)
                 self.backtracking = True
 
         # backtracking phase
