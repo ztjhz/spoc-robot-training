@@ -409,7 +409,7 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         self.backtracking = False
         self.backtracking_actions = []
         self.cached_failures = defaultdict(set)
-        self.prev_action_idx = None
+        self.action_state_cache = []
 
     def reset(self):
         self.curr_t = 0
@@ -536,7 +536,12 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
 
         curr_logits = logits["actions_logits"][0, -1]
 
-        hash_key = processed_observations["visual_sensors"]["raw_navigation_camera"].cpu().numpy().tobytes()
+        hash_key = (
+            processed_observations["visual_sensors"]["raw_navigation_camera"]
+            .cpu()
+            .numpy()
+            .tobytes()
+        )
         failed_actions = self.cached_failures[hash_key]
         # zero out previously failed action so that the same action is not taken again
         if len(failed_actions) != 0:
@@ -549,9 +554,6 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             self.preprocessor.cfg.action_list,
         )
         action = self.preprocessor.cfg.action_list[action_idx]
-        
-        # keep track for caching failed actions
-        self.prev_action_idx = action_idx
 
         if "last_actions" in self.model.input_sensors:
             self.cache["last_actions"] = action_idx.reshape(1, 1)
@@ -561,16 +563,18 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
         if not self.backtracking and self.handle_fail_move:
             # add the reverse action to backtracking list
             self.backtracking_actions.append(THORActions.get_reverse_action(action))
+            self.action_state_cache.append((hash_key, action_idx))
 
             # only keep the last 10 actions
             if len(self.backtracking_actions) > 10:
                 self.backtracking_actions = self.backtracking_actions[-10:]
+            if len(self.action_state_cache) > 10:
+                self.action_state_cache = self.action_state_cache[-10:]
 
             # handle failure
             if processed_observations["non_visual_sensors"]["last_action_success"] == 0:
                 print("failed action, start backtracking")
 
-                self.cached_failures[hash_key].add(self.prev_action_idx)
                 self.backtracking = True
 
         # backtracking phase
@@ -578,11 +582,11 @@ class EarlyFusionCnnTransformerAgent(AbstractAgent):
             if len(self.backtracking_actions) == 0:
                 print("backtracking complete")
                 self.backtracking = False
-
-                # for the last action, change the agent view point so that it can take a different path this time
-                return THORActions.rotate_left_small, torch.softmax(curr_logits, -1)
             else:
                 action = self.backtracking_actions.pop()
+                state_hash, bad_action_idx = self.action_state_cache.pop()
+                self.cached_failures[state_hash].add(bad_action_idx)
+
                 return action, torch.softmax(curr_logits, -1)
 
         # normal case
